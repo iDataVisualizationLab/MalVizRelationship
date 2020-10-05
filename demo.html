@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<title>Malware Visualization</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--<script src="lib/d3.v5.min.js"></script>-->
+<!--<script src="lib/d3.v4.min.js"></script>-->
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://d3js.org/d3-color.v1.min.js"></script>
+<script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://d3js.org/d3-scale.v3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.min.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+<!--<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>-->
+<!--<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>-->
+
+<!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">-->
+<!--<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">-->
+
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="styles/main.css">
+<!--<link rel="stylesheet" href="styles/v3sidebar.css">-->
+<style>
+    body, h1, h2, h3, h4, h5, h6 {
+        font-family: "Raleway", sans-serif
+    }
+</style>
+<body class="w3-light-grey">
+
+<!-- Overlay effect when opening sidebar on small screens -->
+
+<div id="mySidenavRank" class="sidenav">
+    <div class="tab">
+        <button class="tablinks" onclick="openCity(event, 'rankTab')" id="defaultOpen">Processes Ranked</button>
+        <button class="tablinks" onclick="openCity(event, 'libTab')" id="libTabName">Libraries Called</button>
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    </div>
+
+    <div id="rankTab" class="tabcontent">
+        <div class="w3-container" style="padding-right: 0; padding-left: 0">
+            <div id="ranked" class="contentRanked">
+            </div>
+        </div>
+    </div>
+
+    <div id="libTab" class="tabcontent">
+        <div class="w3-container w3-padding-large w3-white">
+            <h4 id="library"><b>Libraries Called</b></h4>
+
+            <table width="100%" border="0px">
+                <tbody>
+                <tr>
+                    <td width="100%">
+                        <div>
+                            <p>
+                                <label for="amount">Number of libraries called:</label>
+                                <input type="text" id="amount" readonly
+                                       style="border:0; color:#f6931f; font-weight:bold;">
+                            </p>
+                            <div id="slider"
+                                 style="width: 400px; background: linear-gradient(to right, #ffffff 0%, #000000 100%);">
+                                <div id="custom-handle" class="ui-slider-handle" style="z-index: auto"></div>
+                            </div>
+                            <span>
+                            <p>Order: <select id="order">
+                                <option value="similarity">By Similarity</option>
+                                <option value="name">By Name</option>
+                                <option value="frequency">By Frequency</option>
+                                <option value="linkDiff">By Different libraries called</option>
+                            </select>
+                            </p>
+                        </span>
+                        </div>
+
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div id="matrix2D"></div>
+
+            <div class="tooltip" style="opacity: 0;" id="ttMatrix"></div>
+        </div>
+    </div>
+</div>
+
+
+<!-- !PAGE CONTENT! -->
+<div class="w3-main" style="margin-left:0px" id="mainContent">
+    <div class="overlaySide">
+        <a class="openbtn btn-floating btn" id="sideNavbtn" onclick="openNav()">
+            <i class='fa fa-chevron-circle-right chevron'></i>
+        </a>
+    </div>
+    <!-- Header -->
+    <header id="portfolio">
+        <div class="w3-container mt-2">
+            <h1><b>Malware Visualization</b>
+                <a href="demo.html" style="text-decoration: none" >
+                    <button type="button" class="gen-btn info-btn"
+                            style="display: inline;
+                                            background-color: #13697b;
+                                   color: white;">Demo</button>
+                </a>
+                <a href="index.html" style="text-decoration: none" target="_blank">
+                    <button type="button" class="gen-btn info-btn"
+                            style="display: inline;
+                                   background-color: #17a2b8;
+                                   color: white;">Video <i class="fa fa-external-link" aria-hidden="true"></i>
+                    </button>
+                </a>
+            </h1>
+        </div>
+    </header>
+
+    <!-- First Photo Grid-->
+
+    <div class="w3-row-padding" style="background-color:#cecece; margin-bottom: 20px">
+        <h4 class="w3-container"><b>Processes</b></h4>
+        <div class="w3-threequarter w3-container w3-margin-bottom" style="width:100%">
+            <div class="w3-container w3-white pb-2" id="heatmap" style="overflow-x: auto">
+
+            </div>
+            <span id="operation"></span>
+        </div>
+    </div>
+
+
+</div>
+<div id="loading">
+    <img id="loading-image" height="200" width="200" src="images/squareloader2.gif" alt="Loading..."/>
+</div>
+<script src="js/ultility.js"></script>
+<script src="js/variables.js"></script>
+<script src="js/main.js"></script>
+<script src="js/getLibData.js"></script>
+<script src="js/api.js"></script>
+<script>
+    document.getElementById("mySidenavRank").style.height = $(window).height();
+    var rankEvent, libEvent;
+    var sideWidth = 600;
+
+    discovery("#sideNavbtn");
+
+    function discovery(d) {
+        d3.select(d).style('left', '20px')
+            .classed("pulse", true)
+            // .transition().delay(7000).duration(1000)
+            // .style('left', null)
+            .on('end', function () {
+                d3.select(d).classed("pulse", true);
+            });
+    }
+
+    function openNav() {
+        if (!rankEvent) {
+            rankEvent = 1;
+        }
+
+        document.getElementById("mySidenavRank").style.width = sideWidth + "px";
+        document.getElementById("mainContent").style.marginLeft = sideWidth + "px";
+        d3.select("#rankBtn").classed("w3-black", true);
+    }
+
+    function closeNav() {
+        // d3.select("mySidenavRank").classed("raise", false);
+        document.getElementById("mySidenavRank").style.width = "0";
+        document.getElementById("mainContent").style.marginLeft = "0";
+        d3.select("#rankBtn").classed("w3-black", false);
+    }
+
+    function openCity(evt, cityName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(cityName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    // Get the element with id="defaultOpen" and click on it
+    document.getElementById("defaultOpen").click();
+
+    let divOperation = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+    function ispagebusy(isbusy){
+        let loading = d3.select('#loading');
+        if (isbusy){
+            loading.classed('hide',false)
+            loading.append('img')
+                .attr('id', 'loading-image')
+                .attr('src', 'images/squareloader2.gif')
+                .attr("height", "200")
+                .attr("height", "200");
+        }else{
+            loading.classed('hide',true)
+            loading.select('img').remove()
+        }
+    }
+    // load similarity map
+
+    // load available file
+    $('select#selectmalware').on('change', function (e) {
+        let optionSelected = $("option:selected", this);
+        let valueSelected = this.value;
+        ispagebusy(true);
+        init(valueSelected);
+    });
+
+    // load local file
+
+
+    const availableVirus = ["WannaPeace", "Teerac", "Cerber", "HackTool-EmailCrack-Win10", "10BackdoorRemcos",
+         "faran-7-vs-backdoor-14", "Vung-Email-Flooder-Archis-Win7",
+        "Vung-Win10-Bladabindi", "faran-7-vs-backdoor-10", "faran-7-vs-backdoor-12", "faran-7-vs-backdoor-13",
+        "faran-7-vs-backdoor-15", "Faran-win7-vs-7fa0ef3f22045c45c80885865d0d0942",
+        "Faran-win7-vs-13ef35e912a54739a27015eecc3fbbaeaf2ba2b7a2a49bfd11e26e099a330926-a", "Moi-XP-RemoteAccess_2",
+        "Moi-XP-RemoteAccess_5", "Vung-Win10-Mailpassview", "Huyen-Trojan-Infostealer.Dexter", "Faran-Trojan-Backdoor.win32.executor.a"
+      ]
+
+    var graphLayout = d3.forceSimulation();
+    var labelLayout = d3.forceSimulation();
+    let init = function (filePath) {
+        lensingStatus = false;
+        streamEvent = false;
+        rankEvent = 0;
+        libEvent = 0;
+        closeNav();
+        console.log(filePath);
+
+        d3.json( "data/" + filePath).then(function (d) {
+            d.forEach(e=>{
+                e.id = +e.id;
+                e.value.forEach(f=>{f.id = +f.id;f.value = +f.value})
+            });
+            return d;
+        }).then(loadData);
+
+    };
+
+    let loadData =
+        function (original_data) {
+            let graph = {nodes:[],links:[]};
+            var label = {
+                'nodes': [],
+                'links': []
+            };
+            let dictobj = {};
+            original_data.map((d,i)=>{
+                if (!dictobj[d.key])
+                    dictobj[d.key] = {"id":d.key,relatedNode:[],relatedLink:[]};
+                let datapoint = dictobj[d.key];
+                graph.nodes.push(datapoint);
+                label.nodes.push({node: datapoint});
+                label.nodes.push({node: datapoint});
+                label.links.push({
+                    source: i * 2,
+                    target: i * 2 + 1
+                });
+                d.value.forEach(e=>{
+                    if (e.value> 0.7){
+                        if (!dictobj[e.key])
+                            dictobj[e.key] = {"id":e.key,relatedNode:[],relatedLink:[]};
+                        let link = {"source":d.key,"target":e.key,"weight":e.value};
+                        graph.links.push(link);
+                        datapoint.relatedNode.push(dictobj[e.key]);
+                        datapoint.relatedLink.push(link);
+                        dictobj[e.key].relatedNode.push(datapoint);
+                        dictobj[e.key].relatedLink.push(link);
+                    }
+                })
+            });
+            //scale
+            let weightScale = d3.scaleLinear().domain(d3.extent(graph.links,d=>d.weight)).range([0.5,2])
+            debugger
+            let svg = d3.select('#heatmap').select('svg');
+            let g = svg.select('g.zoom');
+            if(svg.empty()){
+                svg = d3.select('#heatmap').append('svg').attr('width',graphicopt.width).attr('height',graphicopt.height);
+                g = svg.append('g').attr('class','zoom').attr('transform',`translate(${graphicopt.margin.left},${graphicopt.margin.top})`);
+                g.append('g').attr('class','links');
+                g.append('g').attr('class','nodes');
+                g.append('g').attr('class','labelNodes');
+            }
+            svg.call(
+                d3.zoom()
+                    .scaleExtent([.1, 4])
+                    .on("zoom", function() { g.attr("transform", d3.event.transform); })
+            );
+            // graphLayout.stop();
+            // labelLayout.stop();
+            graphLayout =graphLayout.nodes(graph.nodes)
+                .force("charge", d3.forceManyBody().strength(-1800))
+                .force("center", d3.forceCenter(graphicopt.centerX(), graphicopt.centerY()))
+                .force("x", d3.forceX(graphicopt.centerX()).strength(1))
+                .force("y", d3.forceY(graphicopt.centerY()).strength(1))
+                .force("link", d3.forceLink(graph.links).id(function(d) {return d.id; }).distance(30).strength(d=>d.weight))
+                .on("tick", ticked);
+            labelLayout = d3.forceSimulation(label.nodes)
+                .force("charge", d3.forceManyBody().strength(-10))
+                .force("link", d3.forceLink(label.links).distance(0).strength(2));
+            var link = g.select("g.links")
+                .selectAll("line")
+                .data(graph.links)
+                .enter()
+                .append("line")
+                .attr("stroke", "#aaa")
+                .attr("stroke-width", d=>weightScale(d.weight));
+            link.each(function(d){d.node = d3.select(this)});
+            let node = g.select("g.nodes").selectAll(".node").data(graph.nodes).join('circle').attr('class','node').attr('r',3);
+            node.each(function(d){d.node = d3.select(this)});
+            node.on('mouseover',function(d){
+                g.classed('onhighlight',true);
+                d.highlight = true;
+                d.node.classed('highlight',true);
+                d.relatedNode.forEach(e=>(e.labelNode.classed('hide',false),e.node.classed('highlight',true)));
+                d.relatedLink.forEach(e=>e.node.classed('highlight',true));
+                d.labelNode.classed('hide',false);
+            }).on('mouseout',function(d){
+                g.classed('onhighlight',false);
+                g.select("g.nodes").selectAll('.highlight').classed('highlight',false).each(function(d){d.highlight = false;
+                d.relatedNode.forEach(e=>(e.labelNode.classed('hide',true),e.node.classed('highlight',false)));
+                d.relatedLink.forEach(e=>e.node.classed('highlight',false));
+                d.labelNode.classed('hide',true);});
+            });
+            var labelNode = g.select("g.labelNodes")
+                .selectAll("text")
+                .data(label.nodes)
+                .join("text")
+                .classed('hide',true)
+                .text(function(d, i) { return i % 2 == 0 ? "" : d.node.id.replace(/(.CSV)|..\\/g,''); })
+                .style("fill", "#555")
+                .style("font-family", "Arial")
+                .style("font-size", 12)
+                .style("pointer-events", "none"); // to prevent mouseover/drag capture
+            labelNode.each(function(d,i){
+                if(i % 2 !== 0) {
+                    d.node.labelNode = d3.select(this);
+                }
+            })
+            ispagebusy(false);
+            function updateNode(p){
+                p.attr("transform", function(d) {
+                    return "translate(" + fixna(d.x) + "," + fixna(d.y) + ")";
+                });
+            }
+            function updateLink(p){
+                p.attr("x1", function(d) { return fixna(d.source.x); })
+                    .attr("y1", function(d) { return fixna(d.source.y); })
+                    .attr("x2", function(d) { return fixna(d.target.x); })
+                    .attr("y2", function(d) { return fixna(d.target.y); });
+            }
+            function ticked(){
+                node.call(updateNode);
+                link.call(updateLink);
+
+                labelLayout.alphaTarget(0.3).restart();
+                labelNode.each(function(d, i) {
+                    if(i % 2 == 0) {
+                        d.x = d.node.x;
+                        d.y = d.node.y;
+                    } else {
+                        var b = this.getBBox();
+
+                        var diffX = d.x - d.node.x;
+                        var diffY = d.y - d.node.y;
+
+                        var dist = Math.sqrt(diffX * diffX + diffY * diffY);
+
+                        var shiftX = b.width * (diffX - dist) / (dist * 2);
+                        shiftX = Math.max(-b.width, Math.min(0, shiftX));
+                        var shiftY = 16;
+                        this.setAttribute("transform", "translate(" + shiftX + "," + shiftY + ")");
+                    }
+                });
+                labelNode.call(updateNode);
+            }
+            function fixna(x) {
+                if (isFinite(x)) return x;
+                return 0;
+            }
+        }
+
+    let currentInput = "python/sim.json";
+    init(currentInput);
+    // document.getElementById("currentInput").innerHTML = currentInput.substring(0, currentInput.length - 4);
+
+    var list = {
+        "CloseFile": {"operation": "FileSystem", "index": 0},
+        "CreateFile": {"operation": "FileSystem", "index": 1},
+        "CreateFileMapping": {"operation": "FileSystem", "index": 2},
+        "DeviceIoControl": {"operation": "FileSystem", "index": 3},
+        "FileSystemControl": {"operation": "FileSystem", "index": 4},
+        "FlushBuffersFile": {"operation": "FileSystem", "index": 5},
+        "LockFile": {"operation": "FileSystem", "index": 6},
+        "NotifyChangeDirectory": {"operation": "FileSystem", "index": 7},
+        "QueryAllInformationFile": {"operation": "FileSystem", "index": 8},
+        "QueryAttributeInformationVolume": {"operation": "FileSystem", "index": 9},
+        "QueryAttributeTagFile": {"operation": "FileSystem", "index": 10},
+        "QueryBasicInformationFile": {"operation": "FileSystem", "index": 11},
+        "QueryDeviceRelations": {"operation": "FileSystem", "index": 12},
+        "QueryDirectory": {"operation": "FileSystem", "index": 13},
+        "QueryEAFile": {"operation": "FileSystem", "index": 14},
+        "QueryEaInformationFile": {"operation": "FileSystem", "index": 15},
+        "QueryFileInternalInformationFile": {"operation": "FileSystem", "index": 16},
+        "QueryFullSizeInformationVolume": {"operation": "FileSystem", "index": 17},
+        "QueryInformationVolume": {"operation": "FileSystem", "index": 18},
+        "QueryNameInformationFile": {"operation": "FileSystem", "index": 19},
+        "QueryNetworkOpenInformationFile": {"operation": "FileSystem", "index": 20},
+        "QueryNormalizedNameInformationFile": {"operation": "FileSystem", "index": 21},
+        "QueryObjectIdInformationVolume": {"operation": "FileSystem", "index": 22},
+        "QueryOpen": {"operation": "FileSystem", "index": 23},
+        "QueryPositionInformationFile": {"operation": "FileSystem", "index": 24},
+        "QueryRemoteProtocolInformation": {"operation": "FileSystem", "index": 25},
+        "QuerySecurityFile": {"operation": "FileSystem", "index": 26},
+        "QuerySizeInformationVolume": {"operation": "FileSystem", "index": 27},
+        "QueryStandardInformationFile": {"operation": "FileSystem", "index": 28},
+        "QueryStreamInformationFile": {"operation": "FileSystem", "index": 29},
+        "ReadFile": {"operation": "FileSystem", "index": 30},
+        "SetAllocationInformationFile": {"operation": "FileSystem", "index": 31},
+        "SetBasicInformationFile": {"operation": "FileSystem", "index": 32},
+        "SetDispositionInformationFile": {"operation": "FileSystem", "index": 33},
+        "SetEndOfFileInformationFile": {"operation": "FileSystem", "index": 34},
+        "SetPositionInformationFile": {"operation": "FileSystem", "index": 35},
+        "SetRenameInformationFile": {"operation": "FileSystem", "index": 36},
+        "SetSecurityFile": {"operation": "FileSystem", "index": 37},
+        "UnlockFileSingle": {"operation": "FileSystem", "index": 38},
+        "WriteFile": {"operation": "FileSystem", "index": 39},
+        "InternalDeviceIoControl": {"operation": "FileSystem", "index": 40},
+        "System Statistics": {"operation": "FileSystem", "index": 41},
+        "SystemControl": {"operation": "FileSystem", "index": 42},
+        "Load Image": {"operation": "ProcessThread", "index": 0},
+        "Process Create": {"operation": "ProcessThread", "index": 1},
+        "Process Exit": {"operation": "ProcessThread", "index": 2},
+        "Process Start": {"operation": "ProcessThread", "index": 3},
+        "Thread Create": {"operation": "ProcessThread", "index": 4},
+        "Thread Exit": {"operation": "ProcessThread", "index": 5},
+        "RegCloseKey": {"operation": "Registry", "index": 0},
+        "RegCreateKey": {"operation": "Registry", "index": 1},
+        "RegDeleteKey": {"operation": "Registry", "index": 2},
+        "RegDeleteValue": {"operation": "Registry", "index": 3},
+        "RegEnumKey": {"operation": "Registry", "index": 4},
+        "RegEnumValue": {"operation": "Registry", "index": 5},
+        "RegFlushKey": {"operation": "Registry", "index": 6},
+        "RegLoadKey": {"operation": "Registry", "index": 7},
+        "RegOpenKey": {"operation": "Registry", "index": 8},
+        "RegQueryKey": {"operation": "Registry", "index": 9},
+        "RegQueryKeySecurity": {"operation": "Registry", "index": 10},
+        "RegQueryMultipleValueKey": {"operation": "Registry", "index": 11},
+        "RegQueryValue": {"operation": "Registry", "index": 12},
+        "RegSetInfoKey": {"operation": "Registry", "index": 13},
+        "RegSetKeySecurity": {"operation": "Registry", "index": 14},
+        "RegSetValue": {"operation": "Registry", "index": 15},
+        "TCP Accept": {"operation": "Network", "index": 0},
+        "TCP Connect": {"operation": "Network", "index": 1},
+        "TCP Disconnect": {"operation": "Network", "index": 2},
+        "TCP Receive": {"operation": "Network", "index": 3},
+        "TCP Reconnect": {"operation": "Network", "index": 4},
+        "TCP Retransmit": {"operation": "Network", "index": 5},
+        "TCP Send": {"operation": "Network", "index": 6},
+        "TCP TCPCopy": {"operation": "Network", "index": 7},
+        "UDP Receive": {"operation": "Network", "index": 8},
+        "UDP Accept": {"operation": "Network", "index": 9},
+        "UDP Connect": {"operation": "Network", "index": 10},
+        "UDP Send": {"operation": "Network", "index": 11},
+        "Process Profiling": {"operation": "Profiling", "index": 0},
+        "Others": {"operation": "Others", "index": 0}
+    };
+    var colorScaleOrange = d3.scaleSequential(d3["interpolateYlOrBr"])// File: 0-38
+        .domain([70, -30]);
+
+    var colorScaleGreen = d3.scaleSequential(d3["interpolateGreens"]) // Registry: 0-14
+        .domain([20, -3]);
+
+    var colorScaleBlue = d3.scaleSequential(d3["interpolateBlues"])  // Process: 0-5
+        .domain([8, -2]);
+
+    var colorScaleRed = d3.scaleSequential(d3["interpolateReds"]) // Network: 0-9
+        .domain([15, -5]);
+
+    function getOperationType(operation) {
+        if (!list[operation]) {
+            return "Others"
+        } else return list[operation]["operation"]
+            ;
+    }
+
+    var sub = d3.keys(list);
+
+    function colorPicker(operation) {
+        if (list[operation]) {
+            switch (list[operation]["operation"]) {
+                case "FileSystem":
+                    return colorScaleOrange(list[operation]["index"]);
+                case "Registry":
+                    return colorScaleGreen(list[operation]["index"]);
+                case "Network":
+                    return colorScaleRed(list[operation]["index"]);
+                case "ProcessThread":
+                    return colorScaleBlue(list[operation]["index"]);
+                case "Profiling":
+                    return "#6854b1";
+                default:
+                    return "#5d5d5d"
+            }
+        } else return "#5d5d5d"
+    }
+
+</script>
+</body>
+</html>

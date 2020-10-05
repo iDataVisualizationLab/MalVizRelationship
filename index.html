@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<title>Malware Visualization</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--<script src="lib/d3.v5.min.js"></script>-->
+
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="styles/main.css">
+<!--<link rel="stylesheet" href="styles/v3sidebar.css">-->
+<style>
+    body, h1, h2, h3, h4, h5, h6 {
+        font-family: "Raleway", sans-serif
+    }
+
+    .resp-container {
+        position: relative;
+        overflow: hidden;
+        padding-top:34%;
+    }
+
+    .resp-iframe {
+        position: absolute;
+        top: 0;
+        left: 23%;
+        width: 54%;
+        height: 96%;
+        border: 0;
+    }
+
+    @media screen and (max-width: 900px) {
+        .resp-container {
+            position: relative;
+            overflow: hidden;
+            padding-top: 56.25%;
+        }
+
+        .resp-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+    }
+
+    /*iframe {*/
+    /*    justify-content: center;*/
+    /*    display:block;*/
+    /*}*/
+
+
+</style>
+<body class="w3-light-grey">
+
+
+<!-- !PAGE CONTENT! -->
+<div class="w3-main">
+    <!-- Header -->
+    <header id="portfolio">
+        <div class="w3-container">
+            <h1><b>Malware Visualization</b>
+                <a href="demo.html" style="text-decoration: none" target="_blank">
+                    <button type="button" class="gen-btn info-btn"
+                            style="display: inline;
+                                   background-color: #17a2b8;
+                                   color: white;">Demo <i class="fa fa-external-link" aria-hidden="true"></i>
+                    </button>
+                </a>
+                <a href="index.html" style="text-decoration: none">
+                    <button type="button" class="gen-btn info-btn"
+                            style="display: inline;
+                                   background-color: #13697b;
+                                   color: white;">Video</i>
+                    </button>
+                </a>
+            </h1>
+
+        </div>
+    </header>
+</div>
+
+<div align="center" style="background-color:#cecece;">
+
+    <h2 class="w3-padding-16">MalViz+: Malware Behavior Comprehension through Interactive Visual Analytics
+    </h2>
+    <div class="resp-container">
+        <iframe class="resp-iframe" src="//www.youtube.com/embed/BDa0sgPCqCs" gesture="media" frameborder="0"
+                allowfullscreen></iframe>
+    </div>
+</div>
+
+</body>
+</html>
