@@ -1,3 +1,3 @@
-# MalViz
+# MalVizRelationship
 
-https://idatavisualizationlab.github.io/MalViz/
+https://idatavisualizationlab.github.io/MalVizRelationship/
